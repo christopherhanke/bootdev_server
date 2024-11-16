@@ -9,12 +9,13 @@ func main() {
 	const filepathRoot = "."
 	const port = "8080"
 
-	new := http.NewServeMux()
-	new.Handle("/", http.FileServer(http.Dir(filepathRoot)))
+	mux := http.NewServeMux()
+	mux.Handle("/app/", http.StripPrefix("/app", http.FileServer(http.Dir(filepathRoot))))
+	mux.HandleFunc("/healthz", hanlderHealthz)
 
 	server := http.Server{
 		Addr:    ":" + port,
-		Handler: new,
+		Handler: mux,
 	}
 
 	log.Printf("Serving files from %s on port %s\n", filepathRoot, port)
