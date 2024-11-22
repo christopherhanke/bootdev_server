@@ -1,8 +1,8 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
-	"strconv"
 )
 
 // serve hits on HTTP Fileserver in plain text
@@ -13,9 +13,13 @@ func (cfg *apiConfig) handlerMetrics(respw http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	hits := "Hits: " + strconv.FormatInt(int64(cfg.fileserverHits.Load()), 10) + "\n"
-
-	respw.Header().Add("Content-Type", "text/plain; charset=utf-8")
+	respw.Header().Add("Content-Type", "text/html")
 	respw.WriteHeader(http.StatusOK)
-	respw.Write([]byte(hits))
+	respw.Write([]byte(fmt.Sprintf(
+		`<html>
+			<body>
+				<h1>Welcome, Chirpy Admin</h1>
+				<p>Chirpy has been visited %d times!</p>
+			</body>
+		</html>`, cfg.fileserverHits.Load())))
 }
