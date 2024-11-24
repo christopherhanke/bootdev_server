@@ -5,13 +5,11 @@ import (
 	"net/http"
 )
 
-type returnMsg struct {
-	Error       string `json:"error"`
-	CleanedBody string `json:"cleaned_body"`
-}
-
 // response with error, giving http-StatusCode and error message
 func respondWithError(respw http.ResponseWriter, code int, msg string) {
+	type returnMsg struct {
+		Error string `json:"error"`
+	}
 	respw.Header().Set("Content-Type", "application/json")
 	respw.WriteHeader(code)
 	respmsg, err := json.Marshal(returnMsg{Error: msg})

@@ -5,14 +5,29 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
+
+	"github.com/christopherhanke/bootdev_server/internal/database"
+	"github.com/google/uuid"
 )
 
-type parameters struct {
-	Body string `json:"body"`
+type Chirp struct {
+	ID        uuid.UUID `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	Body      string    `json:"body"`
+	UserID    uuid.UUID `json:"user_id"`
 }
 
 // handler which validates incoming chirps
-func handlerValidate(respw http.ResponseWriter, req *http.Request) {
+func (cfg *apiConfig) handlerChirp(respw http.ResponseWriter, req *http.Request) {
+	// format of the incoming json data
+	type parameters struct {
+		Body   string    `json:"body"`
+		UserID uuid.UUID `json:"user_id"`
+	}
+
+	// decode incoming request to handle
 	decoder := json.NewDecoder(req.Body)
 	var params parameters
 	err := decoder.Decode(&params)
@@ -22,15 +37,34 @@ func handlerValidate(respw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	// message body has to be max 140 characters
 	if len(params.Body) > 140 {
 		log.Printf("Chirp ist too long: %v", len(params.Body))
 		respondWithError(respw, http.StatusBadRequest, "Chirp is too long")
 		return
 	}
-
 	log.Printf("valid chirp")
-	response := map[string]string{"cleaned_body": replaceBadWords(params.Body)}
-	respondWithJSON(respw, http.StatusOK, response)
+
+	// create chirp in database and handle error
+	chirp, err := cfg.databaseQueries.CreateChirp(req.Context(), database.CreateChirpParams{
+		Body:   replaceBadWords(params.Body),
+		UserID: params.UserID,
+	})
+	if err != nil {
+		log.Printf("Error creating chirp: %s", err)
+		respondWithError(respw, http.StatusInternalServerError, "Something went wrong")
+		return
+	}
+
+	// handle chirp to marshal for json
+	response := Chirp{
+		ID:        chirp.ID,
+		CreatedAt: chirp.CreatedAt,
+		UpdatedAt: chirp.UpdatedAt,
+		Body:      chirp.Body,
+		UserID:    chirp.UserID,
+	}
+	respondWithJSON(respw, http.StatusCreated, response)
 }
 
 // replacing all bad words in a string with ****
