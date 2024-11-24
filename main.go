@@ -1,13 +1,20 @@
 package main
 
 import (
+	"database/sql"
 	"log"
 	"net/http"
+	"os"
 	"sync/atomic"
+
+	"github.com/christopherhanke/bootdev_server/internal/database"
+	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
 )
 
 type apiConfig struct {
-	fileserverHits atomic.Int32
+	fileserverHits  atomic.Int32
+	databaseQueries *database.Queries
 }
 
 func main() {
@@ -16,6 +23,19 @@ func main() {
 	apiCfg := apiConfig{
 		fileserverHits: atomic.Int32{},
 	}
+
+	err := godotenv.Load(".env")
+	if err != nil {
+		log.Fatalf("loading enviroment failed: %v\n", err)
+	}
+
+	dbURL := os.Getenv("DB_URL")
+	db, err := sql.Open("postgres", dbURL)
+	if err != nil {
+		log.Fatalf("open database failed: %v\n", err)
+	}
+	apiCfg.databaseQueries = database.New(db)
+
 	mux := http.NewServeMux()
 	mux.Handle("/app/", apiCfg.middlewareMetricsInc(http.StripPrefix("/app", http.FileServer(http.Dir(filepathRoot)))))
 	mux.HandleFunc("GET /admin/metrics", apiCfg.handlerMetrics)
@@ -29,7 +49,7 @@ func main() {
 	}
 
 	log.Printf("Serving files from %s on port %s\n", filepathRoot, port)
-	err := server.ListenAndServe()
+	err = server.ListenAndServe()
 	if err != nil {
 		log.Fatalf("server failed: %v\n", err)
 	}
