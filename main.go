@@ -15,6 +15,7 @@ import (
 type apiConfig struct {
 	fileserverHits  atomic.Int32
 	databaseQueries *database.Queries
+	enviroment      string
 }
 
 func main() {
@@ -29,6 +30,7 @@ func main() {
 		log.Fatalf("loading enviroment failed: %v\n", err)
 	}
 
+	apiCfg.enviroment = os.Getenv("PLATFORM")
 	dbURL := os.Getenv("DB_URL")
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
@@ -42,6 +44,7 @@ func main() {
 	mux.HandleFunc("POST /admin/reset", apiCfg.handlerReset)
 	mux.HandleFunc("GET /api/healthz", hanlderHealthz)
 	mux.HandleFunc("POST /api/validate_chirp", handlerValidate)
+	mux.HandleFunc("POST /api/users", apiCfg.handlerCreateUser)
 
 	server := http.Server{
 		Addr:    ":" + port,
