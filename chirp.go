@@ -43,7 +43,7 @@ func (cfg *apiConfig) handlerChirp(respw http.ResponseWriter, req *http.Request)
 		respondWithError(respw, http.StatusBadRequest, "Chirp is too long")
 		return
 	}
-	log.Printf("valid chirp")
+	log.Printf("valid chirp: %s", params.Body)
 
 	// create chirp in database and handle error
 	chirp, err := cfg.databaseQueries.CreateChirp(req.Context(), database.CreateChirpParams{
@@ -80,4 +80,29 @@ func replaceBadWords(msg string) string {
 		}
 	}
 	return strings.Join(words, " ")
+}
+
+// handler gets all chirps in ascending order from database and parses json
+func (cfg *apiConfig) handlerGetChirps(respw http.ResponseWriter, req *http.Request) {
+	chirps, err := cfg.databaseQueries.GetChirps(req.Context())
+	if err != nil {
+		log.Printf("Error loading chirps from database: %s", err)
+		respondWithError(respw, http.StatusInternalServerError, "error loading chirps")
+		return
+	}
+
+	var jsonChirps []Chirp
+	for _, chirp := range chirps {
+		val := Chirp{
+			ID:        chirp.ID,
+			CreatedAt: chirp.CreatedAt,
+			UpdatedAt: chirp.UpdatedAt,
+			Body:      chirp.Body,
+			UserID:    chirp.UserID,
+		}
+		jsonChirps = append(jsonChirps, val)
+	}
+
+	log.Printf("request all chirps: %v", len(jsonChirps))
+	respondWithJSON(respw, http.StatusOK, jsonChirps)
 }
