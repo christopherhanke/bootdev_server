@@ -106,3 +106,35 @@ func (cfg *apiConfig) handlerGetChirps(respw http.ResponseWriter, req *http.Requ
 	log.Printf("request all chirps: %v", len(jsonChirps))
 	respondWithJSON(respw, http.StatusOK, jsonChirps)
 }
+
+func (cfg *apiConfig) handlerGetChip(respw http.ResponseWriter, req *http.Request) {
+	id := req.PathValue("chirpID")
+	if id == "" {
+		log.Printf("no chirp found: %s", req.URL.Path)
+		respondWithError(respw, http.StatusNotFound, "no chirp found")
+		return
+	}
+
+	val, err := uuid.Parse(id)
+	if err != nil {
+		log.Printf("error reading uuid: %s", id)
+		respondWithError(respw, http.StatusNotFound, "could not read uuid")
+		return
+	}
+
+	chirp, err := cfg.databaseQueries.GetChirp(req.Context(), val)
+	if err != nil {
+		log.Printf("no chirp found: %v", err)
+		respondWithError(respw, http.StatusNotFound, "error searching chirp")
+	}
+	jsonChirp := Chirp{
+		ID:        chirp.ID,
+		CreatedAt: chirp.CreatedAt,
+		UpdatedAt: chirp.UpdatedAt,
+		Body:      chirp.Body,
+		UserID:    chirp.UserID,
+	}
+
+	log.Printf("chirp ID: %s", chirp.ID)
+	respondWithJSON(respw, http.StatusOK, jsonChirp)
+}

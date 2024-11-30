@@ -1,0 +1,24 @@
+POST http://localhost:8080/api/chirps
+Content-Type: application/json
+
+{
+  "body": "This is a test message",
+  "user_id": "${userID1}"
+}
+
+###
+
+POST http://localhost:8080/api/chirps
+Content-Type: application/json
+
+{
+  "body": "If you're committed enough, you can make any story work.",
+  "user_id": "${userID1}"
+}
+
+###
+
+GET http://localhost:8080/api/chirps
+
+###
+GET http://localhost:8080/api/chirps/${chirpID1}
