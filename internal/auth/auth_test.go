@@ -26,8 +26,23 @@ func TestCompareHashedPassowrd(t *testing.T) {
 		"123456",
 		"Password1",
 	}
-	tests := []struct {
+	tests := [3]struct {
 		input, expected string
 	}{}
+	for i, password := range passwords {
+		tests[i].input = password
+		hash, err := HashPassword(password)
+		if err != nil {
+			t.Errorf("Error hashing password: %s", password)
+		}
+		tests[i].expected = hash
+	}
+
+	for _, test := range tests {
+		err := CheckPasswordHash(test.input, test.expected)
+		if err != nil {
+			t.Errorf("Error comparing hash: %s", test.input)
+		}
+	}
 
 }
