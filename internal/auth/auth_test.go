@@ -54,10 +54,12 @@ func TestMakeJWT(t *testing.T) {
 	expiresIn, err := time.ParseDuration("1m")
 	if err != nil {
 		t.Errorf("failed to create expire duration")
+		return
 	}
 	token, err := MakeJWT(uuid.New(), "Test", expiresIn)
 	if err != nil {
 		t.Errorf("failed to create token: %s", err)
+		return
 	}
 	log.Print(token)
 }
@@ -68,16 +70,68 @@ func TestValidateJWT(t *testing.T) {
 	expiresIn, err := time.ParseDuration("1m")
 	if err != nil {
 		t.Errorf("failed to create expire duration")
+		return
 	}
 	tokenString, err := MakeJWT(id, tokenSecret, expiresIn)
 	if err != nil {
 		t.Errorf("failed to create token: %s", err)
+		return
 	}
 	valID, err := ValidateJWT(tokenString, tokenSecret)
 	if err != nil {
 		t.Errorf("Validation failed: %s", err)
+		return
 	}
 	if valID != id {
 		t.Error("Validation failed: ID failed")
+		return
 	}
+}
+
+func TestValidateJWTDiffTime(t *testing.T) {
+	id := uuid.New()
+	tokenSecret := "Test"
+	expiresIn, err := time.ParseDuration("1ms")
+	if err != nil {
+		t.Errorf("failed to create expire duration")
+		return
+	}
+	tokenString, err := MakeJWT(id, tokenSecret, expiresIn)
+	if err != nil {
+		t.Errorf("failed to create token: %s", err)
+		return
+	}
+	expired, err := time.ParseDuration("2ms")
+	if err != nil {
+		t.Errorf("failed to create duration")
+		return
+	}
+	time.Sleep(expired)
+	valID, err := ValidateJWT(tokenString, tokenSecret)
+	if valID != uuid.Nil {
+		t.Errorf("token validation didn't catch expire")
+		return
+	}
+	log.Printf("Validation failed: %s", err)
+}
+
+func TestValidateJWTDiffSecret(t *testing.T) {
+	id := uuid.New()
+	tokenSecret := "Test"
+	expiresIn, err := time.ParseDuration("1m")
+	if err != nil {
+		t.Errorf("failed to create expire duration")
+		return
+	}
+	tokenString, err := MakeJWT(id, tokenSecret, expiresIn)
+	if err != nil {
+		t.Errorf("failed to create token: %s", err)
+		return
+	}
+	valID, err := ValidateJWT(tokenString, "1234")
+	if valID != uuid.Nil {
+		t.Errorf("token validation didn't catch secret")
+		return
+	}
+	log.Printf("Validation failed: %s", err)
 }
