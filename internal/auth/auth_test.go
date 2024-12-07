@@ -61,3 +61,23 @@ func TestMakeJWT(t *testing.T) {
 	}
 	log.Print(token)
 }
+
+func TestValidateJWT(t *testing.T) {
+	id := uuid.New()
+	tokenSecret := "Test"
+	expiresIn, err := time.ParseDuration("1m")
+	if err != nil {
+		t.Errorf("failed to create expire duration")
+	}
+	tokenString, err := MakeJWT(id, tokenSecret, expiresIn)
+	if err != nil {
+		t.Errorf("failed to create token: %s", err)
+	}
+	valID, err := ValidateJWT(tokenString, tokenSecret)
+	if err != nil {
+		t.Errorf("Validation failed: %s", err)
+	}
+	if valID != id {
+		t.Error("Validation failed: ID failed")
+	}
+}
