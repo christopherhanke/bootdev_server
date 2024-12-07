@@ -1,7 +1,11 @@
 package auth
 
 import (
+	"log"
 	"testing"
+	"time"
+
+	"github.com/google/uuid"
 )
 
 func TestHashPassword(t *testing.T) {
@@ -44,5 +48,16 @@ func TestCompareHashedPassowrd(t *testing.T) {
 			t.Errorf("Error comparing hash: %s", test.input)
 		}
 	}
+}
 
+func TestMakeJWT(t *testing.T) {
+	expiresIn, err := time.ParseDuration("1m")
+	if err != nil {
+		t.Errorf("failed to create expire duration")
+	}
+	token, err := MakeJWT(uuid.New(), "Test", expiresIn)
+	if err != nil {
+		t.Errorf("failed to create token: %s", err)
+	}
+	log.Print(token)
 }
