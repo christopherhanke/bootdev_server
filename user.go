@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -16,12 +17,14 @@ type User struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 	Email     string    `json:"email"`
+	Token     string    `json:"token"`
 }
 
 // format of the incoming json data for user
 type parameters struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Email            string `json:"email"`
+	Password         string `json:"password"`
+	ExpiresInSeconds *int   `json:"expires_in_seconds"`
 }
 
 // handler to create new user
@@ -95,12 +98,21 @@ func (cfg *apiConfig) handlerLoginUser(respw http.ResponseWriter, req *http.Requ
 		return
 	}
 
+	expiration := setExpiration(params.ExpiresInSeconds)
+
+	authToken, err := auth.MakeJWT(user.ID, cfg.secret, expiration)
+	if err != nil {
+		respondWithError(respw, http.StatusInternalServerError, "login failed")
+		return
+	}
+
 	// create user for response without password or hash
 	respuser := User{
 		ID:        user.ID,
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
 		Email:     user.Email,
+		Token:     authToken,
 	}
 
 	log.Printf("user logged in: %s", respuser.Email)
@@ -118,4 +130,18 @@ func decodeIncomingUser(req *http.Request) (parameters, error) {
 		return parameters{}, err
 	}
 	return params, nil
+}
+
+func setExpiration(param *int) time.Duration {
+	defaultExpiration := time.Hour
+	if param == nil {
+		return defaultExpiration
+	}
+
+	expiration, err := time.ParseDuration(fmt.Sprintf("%ds", *param))
+	if err != nil || expiration > defaultExpiration {
+		return defaultExpiration
+	}
+	log.Printf("Parsed Duration: %s", expiration)
+	return expiration
 }
