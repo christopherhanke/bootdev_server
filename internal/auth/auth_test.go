@@ -2,6 +2,8 @@ package auth
 
 import (
 	"log"
+	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -134,4 +136,50 @@ func TestValidateJWTDiffSecret(t *testing.T) {
 		return
 	}
 	log.Printf("Validation failed: %s", err)
+}
+
+func TestGetBearerToken(t *testing.T) {
+	tests := []struct {
+		input, expected string
+	}{
+		{"Bearer Test", "Test"},
+		{"Bearer Hash256-1", "Hash256-1"},
+	}
+
+	for _, test := range tests {
+		req := httptest.NewRequest("GET", "/api/chirps", strings.NewReader(""))
+		req.Header.Add("Content-Type", "application/json")
+		req.Header.Add("Authorization", test.input)
+
+		stringToken, err := GetBearerToken(req.Header)
+		if err != nil {
+			t.Errorf("Get bearer token failed: %s", err)
+			return
+		}
+		if stringToken != test.expected {
+			t.Errorf("String token didn't match\nExpected: %s\nActual: %s", test.expected, stringToken)
+		}
+	}
+
+}
+
+func TestGetBearerTokenInvalid(t *testing.T) {
+	tests := []struct {
+		input, expected string
+	}{
+		{"missing", ""},
+		{"", ""},
+		{"bear this header", ""},
+	}
+
+	for _, test := range tests {
+		req := httptest.NewRequest("GET", "/api/chirps", strings.NewReader(""))
+		req.Header.Add("Content-Type", "application/json")
+		req.Header.Add("Authorization", test.input)
+
+		stringToken, err := GetBearerToken(req.Header)
+		if err == nil {
+			t.Errorf("GetBearerToken didn't fail although header: %s\nactual token: %s", test.input, stringToken)
+		}
+	}
 }

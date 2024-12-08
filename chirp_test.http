@@ -7,7 +7,6 @@ Content-Type: application/json
 }
 
 ###
-
 POST http://localhost:8080/api/chirps
 Content-Type: application/json
 
@@ -16,9 +15,12 @@ Content-Type: application/json
   "user_id": "${userID1}"
 }
 
-###
-
+### Test GetChirps
 GET http://localhost:8080/api/chirps
 
-###
+### Test GetChirp with ID
 GET http://localhost:8080/api/chirps/${chirpID1}
+
+### Test GetChirps with Authorization
+GET http://localhost:8080/api/chirps
+Authorization: Test
