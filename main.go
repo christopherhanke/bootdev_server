@@ -16,6 +16,7 @@ type apiConfig struct {
 	fileserverHits  atomic.Int32
 	databaseQueries *database.Queries
 	enviroment      string
+	secret          string
 }
 
 func main() {
@@ -31,6 +32,7 @@ func main() {
 	}
 
 	apiCfg.enviroment = os.Getenv("PLATFORM")
+	apiCfg.secret = os.Getenv("SECRET")
 	dbURL := os.Getenv("DB_URL")
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
