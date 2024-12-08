@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/christopherhanke/bootdev_server/internal/auth"
 	"github.com/christopherhanke/bootdev_server/internal/database"
 	"github.com/google/uuid"
 )
@@ -23,14 +24,24 @@ type Chirp struct {
 func (cfg *apiConfig) handlerChirp(respw http.ResponseWriter, req *http.Request) {
 	// format of the incoming json data
 	type parameters struct {
-		Body   string    `json:"body"`
-		UserID uuid.UUID `json:"user_id"`
+		Body string `json:"body"`
+	}
+
+	authToken, err := auth.GetBearerToken(req.Header)
+	if err != nil {
+		log.Printf("get BearerToken failed: %s", err)
+		respondWithError(respw, http.StatusUnauthorized, "access denied")
+	}
+	userID, err := auth.ValidateJWT(authToken, cfg.secret)
+	if err != nil {
+		log.Printf("failed to validate token: %s", err)
+		respondWithError(respw, http.StatusUnauthorized, "access denied")
 	}
 
 	// decode incoming request to handle
 	decoder := json.NewDecoder(req.Body)
 	var params parameters
-	err := decoder.Decode(&params)
+	err = decoder.Decode(&params)
 	if err != nil {
 		log.Printf("Error decoding parameters: %s", err)
 		respondWithError(respw, http.StatusInternalServerError, "Something went wrong")
@@ -48,7 +59,7 @@ func (cfg *apiConfig) handlerChirp(respw http.ResponseWriter, req *http.Request)
 	// create chirp in database and handle error
 	chirp, err := cfg.databaseQueries.CreateChirp(req.Context(), database.CreateChirpParams{
 		Body:   replaceBadWords(params.Body),
-		UserID: params.UserID,
+		UserID: userID,
 	})
 	if err != nil {
 		log.Printf("Error creating chirp: %s", err)
