@@ -31,11 +31,13 @@ func (cfg *apiConfig) handlerChirp(respw http.ResponseWriter, req *http.Request)
 	if err != nil {
 		log.Printf("get BearerToken failed: %s", err)
 		respondWithError(respw, http.StatusUnauthorized, "access denied")
+		return
 	}
 	userID, err := auth.ValidateJWT(authToken, cfg.secret)
 	if err != nil {
 		log.Printf("failed to validate token: %s", err)
 		respondWithError(respw, http.StatusUnauthorized, "access denied")
+		return
 	}
 
 	// decode incoming request to handle

@@ -22,4 +22,4 @@ Content-Type: application/json
 ###
 POST http://localhost:8080/api/refresh
 Content-Type: application/json
-Authorization: Bearer 7d2dab29abda3e6fb7b850279132f1f2a8eb6a1e82fc2d6bb3da4059b803414f
+Authorization: Bearer e6ce5f7e692c963351486c326a68b0f07db798d2d2fe1b9833e7698e711767ee

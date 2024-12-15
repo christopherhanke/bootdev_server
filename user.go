@@ -154,19 +154,3 @@ func decodeIncomingUser(req *http.Request) (parameters, error) {
 	}
 	return params, nil
 }
-
-/*
-func setExpiration(param *int) time.Duration {
-	defaultExpiration := time.Hour
-	if param == nil {
-		return defaultExpiration
-	}
-
-	expiration, err := time.ParseDuration(fmt.Sprintf("%ds", *param))
-	if err != nil || expiration > defaultExpiration {
-		return defaultExpiration
-	}
-	log.Printf("Parsed Duration: %s", expiration)
-	return expiration
-}
-*/

@@ -53,7 +53,6 @@ func ValidateJWT(tokenString, tokenSecret string) (uuid.UUID, error) {
 		return []byte(tokenSecret), nil
 	})
 	if err != nil {
-		log.Printf("Error parsing token: %s", err)
 		return uuid.Nil, err
 	}
 	subject, err := token.Claims.GetSubject()

@@ -13,3 +13,8 @@ returning *;
 select * from refresh_tokens
     where token = $1;
 
+-- name: RevokeRefreshToken :exec
+update refresh_tokens
+    set updated_at = now(),
+        revoked_at = now()
+    where token = $1;
