@@ -13,18 +13,18 @@ import (
 )
 
 type User struct {
-	ID        uuid.UUID `json:"id"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	Email     string    `json:"email"`
-	Token     string    `json:"token"`
+	ID           uuid.UUID `json:"id"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+	Email        string    `json:"email"`
+	Token        string    `json:"token"`
+	RefreshToken string    `json:"refresh_token"`
 }
 
 // format of the incoming json data for user
 type parameters struct {
-	Email            string `json:"email"`
-	Password         string `json:"password"`
-	ExpiresInSeconds *int   `json:"expires_in_seconds"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 // handler to create new user
@@ -98,21 +98,44 @@ func (cfg *apiConfig) handlerLoginUser(respw http.ResponseWriter, req *http.Requ
 		return
 	}
 
-	expiration := setExpiration(params.ExpiresInSeconds)
-
-	authToken, err := auth.MakeJWT(user.ID, cfg.secret, expiration)
+	authToken, err := auth.MakeJWT(user.ID, cfg.secret, time.Hour)
 	if err != nil {
+		respondWithError(respw, http.StatusInternalServerError, "login failed")
+		return
+	}
+
+	refrString, err := auth.MakeRefreshToken()
+	if err != nil {
+		log.Printf("generating refresh token failed: %s", err)
+		respondWithError(respw, http.StatusInternalServerError, "login failed")
+		return
+	}
+	expirationRefr, err := time.ParseDuration(fmt.Sprintf("%dh", 60*24))
+	if err != nil {
+		log.Printf("generating refresh expiration failed: %s", err)
+		respondWithError(respw, http.StatusInternalServerError, "login failed")
+		return
+	}
+
+	refrToken, err := cfg.databaseQueries.CreateRefreshToken(req.Context(), database.CreateRefreshTokenParams{
+		Token:     refrString,
+		UserID:    user.ID,
+		ExpiresAt: time.Now().Add(expirationRefr),
+	})
+	if err != nil {
+		log.Printf("failed to generate entry for refresh token: %s", err)
 		respondWithError(respw, http.StatusInternalServerError, "login failed")
 		return
 	}
 
 	// create user for response without password or hash
 	respuser := User{
-		ID:        user.ID,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
-		Email:     user.Email,
-		Token:     authToken,
+		ID:           user.ID,
+		CreatedAt:    user.CreatedAt,
+		UpdatedAt:    user.UpdatedAt,
+		Email:        user.Email,
+		Token:        authToken,
+		RefreshToken: refrToken.Token,
 	}
 
 	log.Printf("user logged in: %s", respuser.Email)
@@ -132,6 +155,7 @@ func decodeIncomingUser(req *http.Request) (parameters, error) {
 	return params, nil
 }
 
+/*
 func setExpiration(param *int) time.Duration {
 	defaultExpiration := time.Hour
 	if param == nil {
@@ -145,3 +169,4 @@ func setExpiration(param *int) time.Duration {
 	log.Printf("Parsed Duration: %s", expiration)
 	return expiration
 }
+*/
