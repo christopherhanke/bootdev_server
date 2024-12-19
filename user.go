@@ -36,9 +36,10 @@ func (cfg *apiConfig) handlerCreateUser(respw http.ResponseWriter, req *http.Req
 		return
 	}
 
-	// error if password is invalid, currently empty #TODO
-	if params.Password == "" {
-		log.Printf("Passoword not valid: too short")
+	// error if password is invalid
+	err = validateNewPassword(params.Password)
+	if err != nil {
+		log.Print(err)
 		respondWithError(respw, http.StatusForbidden, "Password invalid")
 		return
 	}
@@ -142,6 +143,69 @@ func (cfg *apiConfig) handlerLoginUser(respw http.ResponseWriter, req *http.Requ
 	respondWithJSON(respw, http.StatusOK, respuser)
 }
 
+// handler to update user
+func (cfg *apiConfig) handlerUpdateUser(respw http.ResponseWriter, req *http.Request) {
+	// validate access token in header
+	authToken, err := auth.GetBearerToken(req.Header)
+	if err != nil {
+		log.Printf("get BearerToken failed: %s", err)
+		respondWithError(respw, http.StatusUnauthorized, "access denied")
+		return
+	}
+	// get UserID from access token
+	userID, err := auth.ValidateJWT(authToken, cfg.secret)
+	if err != nil {
+		log.Printf("failed to validate token: %s", err)
+		respondWithError(respw, http.StatusUnauthorized, "access denied")
+		return
+	}
+
+	// decode incoming request to handle
+	params, err := decodeIncomingUser(req)
+	if err != nil {
+		respondWithError(respw, http.StatusInternalServerError, "Something went wrong")
+		return
+	}
+
+	// error if new password is invalid
+	err = validateNewPassword(params.Password)
+	if err != nil {
+		log.Print(err)
+		respondWithError(respw, http.StatusForbidden, "Password invalid")
+		return
+	}
+
+	// hash password for storing in database
+	hash, err := auth.HashPassword(params.Password)
+	if err != nil {
+		log.Printf("Error hashing password: %s", err)
+		respondWithError(respw, http.StatusInternalServerError, "Error hashing password")
+		return
+	}
+
+	// update user in database
+	user, err := cfg.databaseQueries.UpdateUser(req.Context(), database.UpdateUserParams{
+		ID:             userID,
+		Email:          params.Email,
+		HashedPassword: hash,
+	})
+	if err != nil {
+		log.Printf("error updating user: %s", err)
+		respondWithError(respw, http.StatusInternalServerError, "couldn't update user")
+		return
+	}
+
+	respuser := User{
+		ID:        userID,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+		Email:     user.Email,
+	}
+
+	log.Printf("user updated: %s", respuser.Email)
+	respondWithJSON(respw, http.StatusOK, respuser)
+}
+
 // decode incoming user data to given struct
 func decodeIncomingUser(req *http.Request) (parameters, error) {
 	// decode incoming request to handle
@@ -153,4 +217,13 @@ func decodeIncomingUser(req *http.Request) (parameters, error) {
 		return parameters{}, err
 	}
 	return params, nil
+}
+
+// validate allowed password
+func validateNewPassword(pass string) error {
+	// error if password is invalid, currently empty #TODO
+	if pass == "" {
+		return fmt.Errorf("passoword not valid: too short")
+	}
+	return nil
 }
