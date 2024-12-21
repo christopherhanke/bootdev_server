@@ -19,6 +19,7 @@ type User struct {
 	Email        string    `json:"email"`
 	Token        string    `json:"token"`
 	RefreshToken string    `json:"refresh_token"`
+	IsChirpyRed  bool      `json:"is_chirpy_red"`
 }
 
 // format of the incoming json data for user
@@ -65,10 +66,11 @@ func (cfg *apiConfig) handlerCreateUser(respw http.ResponseWriter, req *http.Req
 
 	// create user for response without password or hash
 	respuser := User{
-		ID:        user.ID,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
-		Email:     user.Email,
+		ID:          user.ID,
+		CreatedAt:   user.CreatedAt,
+		UpdatedAt:   user.UpdatedAt,
+		Email:       user.Email,
+		IsChirpyRed: user.IsChirpyRed,
 	}
 
 	log.Printf("user created: %s", respuser.Email)
@@ -137,6 +139,7 @@ func (cfg *apiConfig) handlerLoginUser(respw http.ResponseWriter, req *http.Requ
 		Email:        user.Email,
 		Token:        authToken,
 		RefreshToken: refrToken.Token,
+		IsChirpyRed:  user.IsChirpyRed,
 	}
 
 	log.Printf("user logged in: %s", respuser.Email)
@@ -196,10 +199,11 @@ func (cfg *apiConfig) handlerUpdateUser(respw http.ResponseWriter, req *http.Req
 	}
 
 	respuser := User{
-		ID:        userID,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
-		Email:     user.Email,
+		ID:          userID,
+		CreatedAt:   user.CreatedAt,
+		UpdatedAt:   user.UpdatedAt,
+		Email:       user.Email,
+		IsChirpyRed: user.IsChirpyRed,
 	}
 
 	log.Printf("user updated: %s", respuser.Email)
