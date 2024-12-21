@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/christopherhanke/bootdev_server/internal/auth"
 	"github.com/google/uuid"
 )
 
@@ -17,10 +18,23 @@ type webhooksParameters struct {
 }
 
 func (cfg *apiConfig) handlerPolkaWebhooks(respw http.ResponseWriter, req *http.Request) {
+	// check for authorization
+	key, err := auth.GetAPIKey(req.Header)
+	if err != nil {
+		log.Printf("API key failed: %s", err)
+		respw.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+	if key != cfg.polkaKey {
+		log.Printf("unauthorized request on Polka Webhook: %s", req.Host)
+		respw.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
 	// decode incoming json on http request
 	decoder := json.NewDecoder(req.Body)
 	var params webhooksParameters
-	err := decoder.Decode(&params)
+	err = decoder.Decode(&params)
 	if err != nil {
 		respw.WriteHeader(http.StatusBadRequest)
 		return

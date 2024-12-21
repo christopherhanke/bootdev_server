@@ -17,6 +17,7 @@ type apiConfig struct {
 	databaseQueries *database.Queries
 	enviroment      string
 	secret          string
+	polkaKey        string
 }
 
 func main() {
@@ -33,6 +34,7 @@ func main() {
 
 	apiCfg.enviroment = os.Getenv("PLATFORM")
 	apiCfg.secret = os.Getenv("SECRET")
+	apiCfg.polkaKey = os.Getenv("POLKA_KEY")
 	dbURL := os.Getenv("DB_URL")
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
