@@ -121,25 +121,27 @@ func (cfg *apiConfig) handlerGetChirps(respw http.ResponseWriter, req *http.Requ
 }
 
 func (cfg *apiConfig) handlerGetChip(respw http.ResponseWriter, req *http.Request) {
+	// get ID from PathValue, parse it to UUID and check for chirp in database.
 	id := req.PathValue("chirpID")
 	if id == "" {
 		log.Printf("no chirp found: %s", req.URL.Path)
 		respondWithError(respw, http.StatusNotFound, "no chirp found")
 		return
 	}
-
 	val, err := uuid.Parse(id)
 	if err != nil {
 		log.Printf("error reading uuid: %s", id)
 		respondWithError(respw, http.StatusNotFound, "could not read uuid")
 		return
 	}
-
 	chirp, err := cfg.databaseQueries.GetChirp(req.Context(), val)
 	if err != nil {
 		log.Printf("no chirp found: %v", err)
 		respondWithError(respw, http.StatusNotFound, "error searching chirp")
+		return
 	}
+
+	// parse Chirp data to JSON aligned struct Chirp and make HTTP response
 	jsonChirp := Chirp{
 		ID:        chirp.ID,
 		CreatedAt: chirp.CreatedAt,
@@ -150,4 +152,56 @@ func (cfg *apiConfig) handlerGetChip(respw http.ResponseWriter, req *http.Reques
 
 	log.Printf("chirp ID: %s", chirp.ID)
 	respondWithJSON(respw, http.StatusOK, jsonChirp)
+}
+
+// delete chirp by given ID in PathValue
+func (cfg *apiConfig) handlerDeleteChirp(respw http.ResponseWriter, req *http.Request) {
+	// get ID from PathValue, parse it to UUID and check for chirp in database.
+	chirpID := req.PathValue("chirpID")
+	if chirpID == "" {
+		log.Printf("chirp ID is missing: %s", req.URL.Path)
+		respondWithError(respw, http.StatusNotFound, "chirp ID is missing")
+		return
+	}
+	val, err := uuid.Parse(chirpID)
+	if err != nil {
+		log.Printf("error reading uuid: %s", chirpID)
+		respondWithError(respw, http.StatusNotFound, "could not read uuid")
+		return
+	}
+	chirp, err := cfg.databaseQueries.GetChirp(req.Context(), val)
+	if err != nil {
+		log.Printf("no chirp found: %s", err)
+		respondWithError(respw, http.StatusNotFound, "error searching chirp")
+		return
+	}
+
+	// check for authentication Token and get UserID from it. compare author of chirp with user authentication.
+	authToken, err := auth.GetBearerToken(req.Header)
+	if err != nil {
+		log.Printf("get BearerToken failed: %s", err)
+		respondWithError(respw, http.StatusUnauthorized, "access denied")
+		return
+	}
+	userID, err := auth.ValidateJWT(authToken, cfg.secret)
+	if err != nil {
+		log.Printf("failed to validate token: %s", err)
+		respondWithError(respw, http.StatusUnauthorized, "access denied")
+		return
+	}
+	if chirp.UserID != userID {
+		log.Printf("user is not author of chirp: %s", chirp.UserID)
+		respondWithError(respw, http.StatusForbidden, "deletion is not authorized")
+		return
+	}
+
+	// delete chirp in database
+	err = cfg.databaseQueries.DeleteChirp(req.Context(), val)
+	if err != nil {
+		log.Printf("failed to delete chirp: %s", err)
+		respondWithError(respw, http.StatusNotFound, "error on deletion")
+		return
+	}
+
+	respondWithJSON(respw, http.StatusNoContent, Chirp{})
 }
