@@ -95,13 +95,33 @@ func replaceBadWords(msg string) string {
 	return strings.Join(words, " ")
 }
 
-// handler gets all chirps in ascending order from database and parses json
+// handler gets all chirps in ascending order from database and parses json. it checks for the author ID in query.
 func (cfg *apiConfig) handlerGetChirps(respw http.ResponseWriter, req *http.Request) {
-	chirps, err := cfg.databaseQueries.GetChirps(req.Context())
-	if err != nil {
-		log.Printf("Error loading chirps from database: %s", err)
-		respondWithError(respw, http.StatusInternalServerError, "error loading chirps")
-		return
+	var chirps []database.Chirp
+	var err error
+
+	// check if URL query has authorID, when authorID is given, only return chirps from that author
+	author := req.URL.Query().Get("author_id")
+	if author != "" {
+		userID, err := uuid.Parse(author)
+		if err != nil {
+			log.Printf("error parsing userID: %s", err)
+			respondWithError(respw, http.StatusInternalServerError, "could not read author id")
+			return
+		}
+		chirps, err = cfg.databaseQueries.GetChirpsAuthor(req.Context(), userID)
+		if err != nil {
+			log.Printf("error getting chirps for user: %s", err)
+			respondWithError(respw, http.StatusInternalServerError, "error loading chirps")
+			return
+		}
+	} else {
+		chirps, err = cfg.databaseQueries.GetChirps(req.Context())
+		if err != nil {
+			log.Printf("Error loading chirps from database: %s", err)
+			respondWithError(respw, http.StatusInternalServerError, "error loading chirps")
+			return
+		}
 	}
 
 	var jsonChirps []Chirp
@@ -116,7 +136,11 @@ func (cfg *apiConfig) handlerGetChirps(respw http.ResponseWriter, req *http.Requ
 		jsonChirps = append(jsonChirps, val)
 	}
 
-	log.Printf("request all chirps: %v", len(jsonChirps))
+	if author != "" {
+		log.Printf("request all chirps from %s: %v", author, len(jsonChirps))
+	} else {
+		log.Printf("request all chirps: %v", len(jsonChirps))
+	}
 	respondWithJSON(respw, http.StatusOK, jsonChirps)
 }
 

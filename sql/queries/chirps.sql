@@ -11,12 +11,17 @@ returning *;
 
 -- name: GetChirps :many
 select * from chirps
-order by created_at asc;
+    order by created_at asc;
 
 -- name: GetChirp :one
 select * from chirps
-where id = $1;
+    where id = $1;
 
 -- name: DeleteChirp :exec
 delete from chirps
-where id = $1;
+    where id = $1;
+
+-- name: GetChirpsAuthor :many
+select * from chirps
+    where user_id = $1
+    order by created_at asc;
