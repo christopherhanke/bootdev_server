@@ -10,8 +10,7 @@ values (
 returning *;
 
 -- name: GetChirps :many
-select * from chirps
-    order by created_at asc;
+select * from chirps;
 
 -- name: GetChirp :one
 select * from chirps
@@ -23,5 +22,4 @@ delete from chirps
 
 -- name: GetChirpsAuthor :many
 select * from chirps
-    where user_id = $1
-    order by created_at asc;
+    where user_id = $1;

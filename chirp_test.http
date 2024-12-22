@@ -24,3 +24,22 @@ GET http://localhost:8080/api/chirps/5493fbe5-9a18-4f66-b188-fa9f77fd6a23
 ### Test GetChirps with Authorization
 GET http://localhost:8080/api/chirps
 Authorization: Test
+
+### Test GetChirps with query sort and author_id
+GET http://localhost:8080/api/chirps?sort=desc&author_id=f4446607-2d39-4a26-bab6-f4976850ffbf
+
+### Test GetChirps with query sort and author_id
+GET http://localhost:8080/api/chirps?sort=asc&author_id=f4446607-2d39-4a26-bab6-f4976850ffbf
+
+
+### Test GetChirps with query author_id
+GET http://localhost:8080/api/chirps?author_id=3a39e76b-176d-47bc-9b78-22892c496d79
+
+### Test GetChirps with query sorted
+GET http://localhost:8080/api/chirps?sort=asc
+
+### Test GetChirps with query sorted
+GET http://localhost:8080/api/chirps?sort=desc
+
+### Test GetChirps with query sort false
+GET http://localhost:8080/api/chirps?sort=banana

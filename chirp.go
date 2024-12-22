@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"sort"
 	"strings"
 	"time"
 
@@ -134,6 +135,18 @@ func (cfg *apiConfig) handlerGetChirps(respw http.ResponseWriter, req *http.Requ
 			UserID:    chirp.UserID,
 		}
 		jsonChirps = append(jsonChirps, val)
+	}
+
+	// check if URL query has sort parameter, default asc
+	sorting := req.URL.Query().Get("sort")
+	if strings.ToLower(sorting) == "desc" {
+		sort.Slice(jsonChirps, func(i, j int) bool {
+			return jsonChirps[i].CreatedAt.After(jsonChirps[j].CreatedAt)
+		})
+	} else {
+		sort.Slice(jsonChirps, func(i, j int) bool {
+			return jsonChirps[i].CreatedAt.Before(jsonChirps[j].CreatedAt)
+		})
 	}
 
 	if author != "" {
