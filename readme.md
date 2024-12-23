@@ -1,5 +1,5 @@
 # Bootdev_Server
-This is a project from [boot.dev](www.boot.dev) to learn building HTTP web server in Go. The project builds a JSON API, incorporates webhooks and JWTs and more.
+This is a project from [boot.dev](https://www.boot.dev) to learn building HTTP web server in Go. The project builds a JSON API, incorporates webhooks and JWTs and more.
 
 
 ## API
@@ -41,12 +41,6 @@ With this HTTP.Request you can update an already existing user. The request need
 HTTP Header
 Authorization: Bearer tokenString
 ```
-If all is correct the response is ``200`` with JSON data like the response of [``POST /api/users``](#post-apiusers). If something went off, there will be corresponding responses ``4xx``/``5xx`` with an JSON message.
-```
-{
-    "error":    "[string]"
-}
-```
 
 
 ### /api/login
@@ -72,13 +66,6 @@ If all is correct the response is ``200`` with JSON data in the following format
 ```
 The ``token`` is used to authorize user specific commands like [``POST /api/chirps``](#post-apichirps) and is viable for an hour. The ``refresh_token`` is used to refresh the ``token`` and is viable for 60 days.
 
-If something went off, there will be corresponding responses ``4xx``/``5xx`` with an JSON message.
-```
-{
-    "error":    "[string]"
-}
-```
-
 
 ### /api/refresh
 #### POST /api/refresh
@@ -91,12 +78,6 @@ If all is correct the response is ``200`` with JSON data in the following format
 ```
 {
     "token":    "[string]"
-}
-```
-If something went off, there will be corresponding responses ``4xx``/``5xx`` with an JSON message.
-```
-{
-    "error":    "[string]"
 }
 ```
 
