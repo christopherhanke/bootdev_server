@@ -107,7 +107,7 @@ func (cfg *apiConfig) handlerGetChirps(respw http.ResponseWriter, req *http.Requ
 		userID, err := uuid.Parse(author)
 		if err != nil {
 			log.Printf("error parsing userID: %s", err)
-			respondWithError(respw, http.StatusInternalServerError, "could not read author id")
+			respondWithError(respw, http.StatusNotFound, "could not read author id")
 			return
 		}
 		chirps, err = cfg.databaseQueries.GetChirpsAuthor(req.Context(), userID)
