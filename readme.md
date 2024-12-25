@@ -1,5 +1,9 @@
 # Bootdev_Server
-This is a project from [boot.dev](https://www.boot.dev) to learn building HTTP web server in Go. The project builds a JSON API, incorporates webhooks and JWTs and more.
+This is a guided project from [boot.dev](https://www.boot.dev) to learn building HTTP web server in Go. The project builds a local server application with JSON API, incorporates webhooks, JWTs/Authorization and more.
+
+## Install
+The application is build for learning purposes, so there is no inherited installation purpose. If you still want to you can install it with:\
+``go install github.com/christopherhanke/bootdev_server``
 
 
 ## API
@@ -108,10 +112,10 @@ If all is well you'll get a ``201`` response with the chirp data in JSON format.
 ```
 {
     "id":           "[uuid]",
-	"created_at":   "[time]",
-	"updated_at":   "[time]",
-	"body":         "[string]",
-	"user_id":      "[uuid]"
+    "created_at":   "[time]",
+    "updated_at":   "[time]",
+    "body":         "[string]",
+    "user_id":      "[uuid]"
 }
 ```
 
@@ -122,10 +126,10 @@ Get all chirps from database in a JSON response. All chirps will be in a list in
 [
     {
         "id":           "[uuid]",
-	    "created_at":   "[time]",
-	    "updated_at":   "[time]",
-	    "body":         "[string]",
-	    "user_id":      "[uuid]"
+        "created_at":   "[time]",
+        "updated_at":   "[time]",
+        "body":         "[string]",
+        "user_id":      "[uuid]"
     },
     ...
 ]
